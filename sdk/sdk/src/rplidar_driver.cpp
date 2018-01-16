@@ -37,6 +37,7 @@
 #include "hal/thread.h"
 #include "hal/locker.h"
 #include "hal/event.h"
+#include <sys/time.h>
 #include "rplidar_driver_serial.h"
 
 #ifndef min
@@ -424,10 +425,15 @@ void     RPlidarDriverSerialImpl::_capsuleToNormal(const rplidar_response_capsul
             diffAngle_q8 += (360<<8);
         }
 
+
         int angleInc_q16 = (diffAngle_q8 << 3);
         int currentAngle_raw_q16 = (prevStartAngle_q8 << 8);
         for (size_t pos = 0; pos < _countof(_cached_previous_capsuledata.cabins); ++pos)
         {
+            struct timespec tv;
+            clock_gettime(CLOCK_REALTIME, &tv);
+            _u64 ts = ((_u64) tv.tv_sec * 1000) + (tv.tv_nsec / 1e6);
+
             int dist_q2[2];
             int angle_q6[2];
             int syncBit[2];
@@ -459,6 +465,7 @@ void     RPlidarDriverSerialImpl::_capsuleToNormal(const rplidar_response_capsul
 
                 node.angle_q6_checkbit = (1 | (angle_q6[cpos]<<1));
                 node.distance_q2 = dist_q2[cpos];
+                node.timestamp = ts;
 
                 nodebuffer[nodeCount++] = node;
              }
