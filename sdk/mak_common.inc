@@ -65,13 +65,14 @@ clean_app:
 	$(RM) $(APP_TARGET)
 
 $(SDK_TARGET): $(OBJ) $(EXTRA_OBJ)
+	@echo `echo $@`
 	$(MKDIR) `dirname $@`
 	@for i in $^; do echo " pack `basename $$i`->`basename $@`"; $(AR) rcs $@ $$i; done
 	
 $(APP_TARGET): $(OBJ) $(EXTRA_OBJ) $(SDK_TARGET)
 	@$(MKDIR) `dirname $@`
 	@echo " LD   $@"
-	$(CMD_HIDE)$(CC) $(ALL_CXXFLAGS) -o $@ $^ $(LDFLAGS)  
+	$(CMD_HIDE)$(CC) -fpic $(ALL_CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 
 #
@@ -79,13 +80,13 @@ $(APP_TARGET): $(OBJ) $(EXTRA_OBJ) $(SDK_TARGET)
 $(TARGET_OBJ_ROOT)/%.o: %.cpp
 	@$(MKDIR) `dirname $@`
 	@echo " CXX  $<"
-	$(CMD_HIDE)$(CXX) -c $(ALL_CXXFLAGS) $< -o $@ 
+	$(CMD_HIDE)$(CXX) -fpic -c $(ALL_CXXFLAGS) $< -o $@ 
 
 # Compile: create object files from C source files.
 $(TARGET_OBJ_ROOT)/%.o: %.c
 	@$(MKDIR) `dirname $@`
 	@echo " CC   $<"
-	$(CMD_HIDE)$(CC) -c $(ALL_CFLAGS) $< -o $@ 
+	$(CMD_HIDE)$(CC) -c $(ALL_CFLAGS) $< -o $@
 
 # Assemble: create object files from assembler source files.
 $(TARGET_OBJ_ROOT)/%.o: %.S
