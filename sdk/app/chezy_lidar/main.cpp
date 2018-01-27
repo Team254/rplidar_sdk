@@ -216,14 +216,8 @@ int main(int argc, const char * argv[]) {
         if (IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
             for (int pos = 0; pos < (int)count ; ++pos) {
-                // printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
-                //     (nodes[pos].sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
-                //     (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
-                //     nodes[pos].distance_q2/4.0f,
-                //     nodes[pos].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
-         
                 char buf[300];
-                sprintf(buf, "%llu,%03.2f,%08.2f\n",
+                sprintf(buf, "%llu,%03.2f,%08.2f-",
                     nodes[pos].timestamp,
                     (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
                     nodes[pos].distance_q2/4.0f);
@@ -231,10 +225,7 @@ int main(int argc, const char * argv[]) {
                 nodes_buffered++;
                 if(nodes_buffered > 50) {
                     const char* packet_str = packet.str().c_str();
-                    n = sendto(sockfd, packet_str, strlen(packet_str), 0,  (struct sockaddr *)  &serveraddr, serverlen);
-                    if (n < 0) {
-                        error("ERROR in sendto");
-                    }
+                    printf("%s\n",packet_str);
                     packet.str("");
                     packet.clear();
                     nodes_buffered = 0;
