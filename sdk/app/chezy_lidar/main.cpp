@@ -36,40 +36,12 @@
 
 #include "rplidar.h" //RPLIDAR standard sdk, all-in-one header
 
-/* 
- * error - wrapper for perror
- */
-void error(char *msg) {
-    perror(msg);
-    exit(0);
-}
-
-#ifndef _countof
-#define _countof(_Array) (int)(sizeof(_Array) / sizeof(_Array[0]))
-#endif
-
-#ifdef _WIN32
-#include <Windows.h>
-#define delay(x)   ::Sleep(x)
-#else
-#include <unistd.h>
-static inline void delay(_word_size_t ms){
-    while (ms>=1000){
-        usleep(1000*1000);
-        ms-=1000;
-    };
-    if (ms!=0)
-        usleep(ms*1000);
-}
-#endif
-
 using namespace rp::standalone::rplidar;
 
 bool checkRPLIDARHealth(RPlidarDriver * drv)
 {
     u_result     op_result;
     rplidar_response_device_health_t healthinfo;
-
 
     op_result = drv->getHealth(healthinfo);
     if (IS_OK(op_result)) { // the macro IS_OK is the preperred way to judge whether the operation is succeed.
@@ -104,51 +76,9 @@ int main(int argc, const char * argv[]) {
     printf("Chezy LIDAR data grabber for RPLIDAR.\n"
            "Version: "RPLIDAR_SDK_VERSION"\n");
 
-    // read serial port from the command line...
-    if (argc>1) opt_com_path = argv[1]; // or set to a fixed value: e.g. "com3" 
 
-    // read baud rate from the command line if specified...
-    if (argc>2) opt_com_baudrate = strtoul(argv[2], NULL, 10);
-
-
-    if (!opt_com_path) {
-#ifdef _WIN32
-        // use default com port
-        opt_com_path = "\\\\.\\com3";
-#else
-        opt_com_path = "/dev/ttyUSB0";
-#endif
-    }
-
-    // Client code
-    int sockfd, n;
-    int serverlen;
-    struct sockaddr_in serveraddr;
-    struct hostent *server;
-    char *hostname = "127.0.0.1";
-    int portno = 9254;
-
-     /* socket: create the socket */
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) 
-        error("ERROR opening socket");
-
-    /* gethostbyname: get the server's DNS entry */
-    server = gethostbyname(hostname);
-    if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host as %s\n", hostname);
-        exit(0);
-    }
-
-    /* build the server's Internet address */
-    bzero((char *) &serveraddr, sizeof(serveraddr));
-    serveraddr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, 
-	  (char *)&serveraddr.sin_addr.s_addr, server->h_length);
-    serveraddr.sin_port = htons(portno);
-    serverlen = sizeof(serveraddr);
-
-    // End client init
+    
+    opt_com_path = "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0";
 
     // create the driver instance
     RPlidarDriver * drv = RPlidarDriver::CreateDriver(RPlidarDriver::DRIVER_TYPE_SERIALPORT);
@@ -157,7 +87,6 @@ int main(int argc, const char * argv[]) {
         fprintf(stderr, "insufficent memory, exit\n");
         exit(-2);
     }
-
 
     // make connection...
     if (IS_FAIL(drv->connect(opt_com_path, opt_com_baudrate))) {
@@ -190,48 +119,21 @@ int main(int argc, const char * argv[]) {
             , devinfo.firmware_version & 0xFF
             , (int)devinfo.hardware_version);
 
-
-
     // check health...
     if (!checkRPLIDARHealth(drv)) {
         goto on_finished;
     }
 
 	signal(SIGINT, ctrlc);
+	signal(SIGTERM, ctrlc);
     
 	drv->startMotor();
     // start scan...
     drv->startScan();
 
-    
-
     // fetech result and print it out...
     while (1) {
-        rplidar_response_measurement_node_t nodes[360*2];
-        size_t   count = _countof(nodes);
-        std::stringstream packet;
-        int nodes_buffered = 0;
-        op_result = drv->grabScanData(nodes, count);
-
-        if (IS_OK(op_result)) {
-            drv->ascendScanData(nodes, count);
-            for (int pos = 0; pos < (int)count ; ++pos) {
-                char buf[300];
-                sprintf(buf, "%llu,%03.2f,%08.2f-",
-                    nodes[pos].timestamp,
-                    (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
-                    nodes[pos].distance_q2/4.0f);
-                packet << buf;
-                nodes_buffered++;
-                if(nodes_buffered > 50) {
-                    const char* packet_str = packet.str().c_str();
-                    printf("%s\n",packet_str);
-                    packet.str("");
-                    packet.clear();
-                    nodes_buffered = 0;
-                }
-            }
-        }
+		sleep(100);
 
         if (ctrl_c_pressed){ 
 			break;

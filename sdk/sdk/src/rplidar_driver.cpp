@@ -467,6 +467,12 @@ void     RPlidarDriverSerialImpl::_capsuleToNormal(const rplidar_response_capsul
                 node.distance_q2 = dist_q2[cpos];
                 node.timestamp = ts;
 
+                printf("%llu,%03.2f,%08.2f%s\n",
+                    node.timestamp,
+                    (node.angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
+                    node.distance_q2/4.0f,
+                    (node.sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"s":"");
+
                 nodebuffer[nodeCount++] = node;
              }
 
