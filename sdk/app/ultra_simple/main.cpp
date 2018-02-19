@@ -58,7 +58,7 @@ bool checkRPLIDARHealth(RPlidarDriver * drv)
 
     op_result = drv->getHealth(healthinfo);
     if (IS_OK(op_result)) { // the macro IS_OK is the preperred way to judge whether the operation is succeed.
-        printf("RPLidar health status : %d\n", healthinfo.status);
+        // printf("RPLidar health status : %d\n", healthinfo.status);
         if (healthinfo.status == RPLIDAR_STATUS_ERROR) {
             fprintf(stderr, "Error, rplidar internal error detected. Please reboot the device to retry.\n");
             // enable the following code if you want rplidar to be reboot by software
@@ -86,8 +86,8 @@ int main(int argc, const char * argv[]) {
     _u32         opt_com_baudrate = 115200;
     u_result     op_result;
 
-    printf("Ultra simple LIDAR data grabber for RPLIDAR.\n"
-           "Version: "RPLIDAR_SDK_VERSION"\n");
+    // printf("Ultra simple LIDAR data grabber for RPLIDAR.\n"
+    //        "Version: "RPLIDAR_SDK_VERSION"\n");
 
     // read serial port from the command line...
     if (argc>1) opt_com_path = argv[1]; // or set to a fixed value: e.g. "com3" 
@@ -133,17 +133,17 @@ int main(int argc, const char * argv[]) {
     }
 
     // print out the device serial number, firmware and hardware version number..
-    printf("RPLIDAR S/N: ");
-    for (int pos = 0; pos < 16 ;++pos) {
-        printf("%02X", devinfo.serialnum[pos]);
-    }
+    // printf("RPLIDAR S/N: ");
+    // for (int pos = 0; pos < 16 ;++pos) {
+    //     printf("%02X", devinfo.serialnum[pos]);
+    // }
 
-    printf("\n"
-            "Firmware Ver: %d.%02d\n"
-            "Hardware Rev: %d\n"
-            , devinfo.firmware_version>>8
-            , devinfo.firmware_version & 0xFF
-            , (int)devinfo.hardware_version);
+    // printf("\n"
+    //         "Firmware Ver: %d.%02d\n"
+    //         "Hardware Rev: %d\n"
+    //         , devinfo.firmware_version>>8
+    //         , devinfo.firmware_version & 0xFF
+    //         , (int)devinfo.hardware_version);
 
 
 
@@ -168,11 +168,10 @@ int main(int argc, const char * argv[]) {
         if (IS_OK(op_result)) {
             drv->ascendScanData(nodes, count);
             for (int pos = 0; pos < (int)count ; ++pos) {
-                printf("%s theta: %03.2f Dist: %08.2f Q: %d \n", 
-                    (nodes[pos].sync_quality & RPLIDAR_RESP_MEASUREMENT_SYNCBIT) ?"S ":"  ", 
+                printf("%03.2f %08.2f\n", 
                     (nodes[pos].angle_q6_checkbit >> RPLIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f,
-                    nodes[pos].distance_q2/4.0f,
-                    nodes[pos].sync_quality >> RPLIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+                    nodes[pos].distance_q2/4.0f
+                );
             }
         }
 
